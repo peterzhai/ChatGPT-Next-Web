@@ -9,6 +9,8 @@ import React, {
   RefObject,
 } from "react";
 
+import { useLocation, useSearchParams } from "react-router-dom";
+
 import SendWhiteIcon from "../icons/send-white.svg";
 import BrainIcon from "../icons/brain.svg";
 import RenameIcon from "../icons/rename.svg";
@@ -653,6 +655,9 @@ function _Chat() {
   type RenderMessage = ChatMessage & { preview?: boolean };
 
   const chatStore = useChatStore();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+
   const session = chatStore.currentSession();
   const config = useAppConfig();
   const fontSize = config.fontSize;
@@ -1096,17 +1101,26 @@ function _Chat() {
       localStorage.removeItem(key);
     }
 
+    // 调用接口获取密码和apikey
+    const searchParams = new URLSearchParams(location.search);
+    let md = searchParams.get("md");
+    if (!accessStore.isAuthorized()) {
+      alert("no auth!!");
+    }
+
     const dom = inputRef.current;
     return () => {
       localStorage.setItem(key, dom?.value ?? "");
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  
+
   const handlePaste = useCallback(
     async (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
       const currentModel = chatStore.currentSession().mask.modelConfig.model;
-      if(!isVisionModel(currentModel)){return;}
+      if (!isVisionModel(currentModel)) {
+        return;
+      }
       const items = (event.clipboardData || window.clipboardData).items;
       for (const item of items) {
         if (item.kind === "file" && item.type.startsWith("image/")) {

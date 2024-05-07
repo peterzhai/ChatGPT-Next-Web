@@ -78,7 +78,11 @@ export const useAccessStore = createPersistStore(
 
     isAuthorized() {
       this.fetch();
-
+      console.log("@@## isValidOpenAI: ", this.isValidOpenAI());
+      console.log("@@## isValidAzure: ", this.isValidAzure());
+      console.log("@@## isValidGoogle: ", this.isValidGoogle());
+      console.log("@@## isValidAnthropic: ", this.isValidAnthropic());
+      console.log("@@## enabledAccessControl: ", this.enabledAccessControl());
       // has token or has code or disabled access control
       return (
         this.isValidOpenAI() ||
