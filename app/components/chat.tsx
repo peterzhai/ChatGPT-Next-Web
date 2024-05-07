@@ -88,6 +88,7 @@ import {
   LAST_INPUT_KEY,
   Path,
   REQUEST_TIMEOUT_MS,
+  STORAGE_KEY,
   UNFINISHED_INPUT,
 } from "../constant";
 import { Avatar } from "./emoji";
@@ -99,6 +100,8 @@ import { ExportMessageModal } from "./exporter";
 import { getClientConfig } from "../config/client";
 import { useAllModels } from "../utils/hooks";
 import { MultimodalContent } from "../client/api";
+import { createUpstashClient } from "../utils/cloud/upstash";
+import { SyncStore } from "../store/sync";
 
 const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
   loading: () => <LoadingIcon />,
@@ -1118,6 +1121,19 @@ function _Chat() {
     // 调用接口获取密码和apikey
     const searchParams = new URLSearchParams(location.search);
     let md = searchParams.get("md");
+    if (md) {
+      let client = createUpstashClient({
+        upstash: {
+          endpoint: "https://usw1-enabled-jennet-34028.upstash.io",
+          username: STORAGE_KEY,
+          apiKey:
+            "AYTsASQgYzc0MmQ2Y2UtNWViZC00ZmRkLWEwYmEtYWVmMzNiYTMyYWQ0Y2UyNDFjOGEwNGNjNDFiYTg5OTg4ZGRmMWE0YWMzN2Y=",
+        },
+      } as SyncStore);
+      client.redisGet(md).then((result) => {
+        console.log("@@##redis data md:", result);
+      });
+    }
     if (!accessStore.isAuthorized()) {
       alert("no auth!!");
     }

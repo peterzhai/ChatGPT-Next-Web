@@ -13,6 +13,8 @@ import { downloadAs, readFromFile } from "../utils";
 import { showToast } from "../components/ui-lib";
 import Locale from "../locales";
 import { createSyncClient, ProviderType } from "../utils/cloud";
+import { createUpstashClient } from "../utils/cloud/upstash";
+
 import { corsPath } from "../utils/cors";
 
 export interface WebDavConfig {
@@ -25,20 +27,21 @@ const isApp = !!getClientConfig()?.isApp;
 export type SyncStore = GetStoreState<typeof useSyncStore>;
 
 const DEFAULT_SYNC_STATE = {
-  provider: ProviderType.WebDAV,
+  provider: ProviderType.UpStash,
   useProxy: true,
   proxyUrl: corsPath(ApiPath.Cors),
+
+  upstash: {
+    endpoint: "https://usw1-enabled-jennet-34028.upstash.io",
+    username: STORAGE_KEY,
+    apiKey:
+      "AYTsASQgYzc0MmQ2Y2UtNWViZC00ZmRkLWEwYmEtYWVmMzNiYTMyYWQ0Y2UyNDFjOGEwNGNjNDFiYTg5OTg4ZGRmMWE0YWMzN2Y=",
+  },
 
   webdav: {
     endpoint: "",
     username: "",
     password: "",
-  },
-
-  upstash: {
-    endpoint: "",
-    username: STORAGE_KEY,
-    apiKey: "",
   },
 
   lastSyncTime: 0,
@@ -85,8 +88,10 @@ export const useSyncStore = createPersistStore(
     },
 
     getClient() {
-      const provider = get().provider;
-      const client = createSyncClient(provider, get());
+      let obj = get();
+      const provider = obj.provider;
+
+      const client = createSyncClient(provider, obj);
       return client;
     },
 
