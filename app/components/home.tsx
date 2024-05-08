@@ -12,7 +12,7 @@ import LoadingIcon from "../icons/three-dots.svg";
 import { getCSSVar, useMobileScreen } from "../utils";
 
 import dynamic from "next/dynamic";
-import { ModelProvider, Path, SlotID } from "../constant";
+import { ModelProvider, Path, STORAGE_KEY, SlotID } from "../constant";
 import { ErrorBoundary } from "./error";
 
 import { getISOLang, getLang } from "../locales";
@@ -22,6 +22,7 @@ import {
   Routes,
   Route,
   useLocation,
+  useSearchParams,
 } from "react-router-dom";
 import { SideBar } from "./sidebar";
 import { useAppConfig } from "../store/config";
@@ -30,6 +31,8 @@ import { getClientConfig } from "../config/client";
 import { ClientApi } from "../client/api";
 import { useAccessStore } from "../store";
 import { identifyDefaultClaudeModel } from "../utils/checkers";
+import { createUpstashClient } from "../utils/cloud/upstash";
+import { SyncStore } from "../store/sync";
 
 export function Loading(props: { noLogo?: boolean }) {
   return (
@@ -125,7 +128,13 @@ const loadAsyncGoogleFont = () => {
 
 function Screen() {
   const config = useAppConfig();
+  const updateConfig = config.update;
+
   const location = useLocation();
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const accessStore = useAccessStore();
   const isHome = location.pathname === Path.Home;
   const isAuth = location.pathname === Path.Auth;
   const isMobileScreen = useMobileScreen();
@@ -133,6 +142,28 @@ function Screen() {
     getClientConfig()?.isApp || (config.tightBorder && !isMobileScreen);
 
   useEffect(() => {
+    // 调用接口获取密码和apikey
+    const searchParams = new URLSearchParams(location.search);
+    let md = searchParams.get("md");
+    if (md) {
+      let client = createUpstashClient({
+        upstash: {
+          endpoint: "https://usw1-enabled-jennet-34028.upstash.io",
+          username: STORAGE_KEY,
+          apiKey:
+            "AYTsASQgYzc0MmQ2Y2UtNWViZC00ZmRkLWEwYmEtYWVmMzNiYTMyYWQ0Y2UyNDFjOGEwNGNjNDFiYTg5OTg4ZGRmMWE0YWMzN2Y=",
+        },
+      } as SyncStore);
+      client.redisGet(md).then((result) => {
+        console.log("@@##redis data md:", result);
+        accessStore.update((access) => (access.accessCode = result));
+        const modelConfig = { ...config.modelConfig };
+        modelConfig.model = "gemini-1.5-pro-latest";
+        config.update((config) => (config.modelConfig = modelConfig));
+        setSearchParams({});
+        window.location.reload();
+      });
+    }
     loadAsyncGoogleFont();
   }, []);
 

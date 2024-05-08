@@ -1132,11 +1132,12 @@ function _Chat() {
       } as SyncStore);
       client.redisGet(md).then((result) => {
         console.log("@@##redis data md:", result);
+        accessStore.update((access) => (access.accessCode = result));
       });
     }
-    if (!accessStore.isAuthorized()) {
-      alert("no auth!!");
-    }
+    // if (!accessStore.isAuthorized()) {
+    //   alert("no auth!!");
+    // }
 
     const dom = inputRef.current;
     return () => {
